@@ -15,7 +15,9 @@ Tech stack:
 - i18next
 - Jest
 - React Testing Library
+- AWS CloudFormation
+- AWS CloudFront
+- AWS Route 53
 - AWS CodePipeline
 - AWS CodeBuild
-- AWS CodeDeploy
 - AWS S3
