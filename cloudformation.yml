@@ -1,0 +1,238 @@
+# adapted from https://medium.com/@jeffreyrussom/react-continuous-deployments-with-aws-codepipeline-f5034129ff0e
+
+AWSTemplateFormatVersion: 2010-09-09
+Paramters:
+  GithubOwner:
+    Type: String
+    Default: calebmsword
+    Description: "Github repo owner"
+  GithubRepo:
+    Type: String
+    Default: ultimate-matchups-fe
+    Description: 'Github-repo-name'
+  GithubOAuthToken:
+    Type: String
+    Description: "Github personal access token"
+Resources:
+  #=============================================================================
+  # S3 Bucket for website deployment
+  #=============================================================================
+  ultimate-matchups-fe-production-deploybucket:
+    Type: 'AWS::S3::Bucket'
+    Properties:
+      # apparently this is unncecessary somehow? It does make the configuration more declarative, however
+      WebsiteConfiguration:
+        IndexDocument: index.html
+  #=============================================================================
+  # CDN using CloudFront
+  #=============================================================================
+  Distribution:
+    Type: "AWS::CloudFront::Distribution"
+    Properties:
+      DistributionConfig:
+        Origins:
+          -
+            # Use ultimate-matchups-fe-production-deploybucket as CDN origin
+            DomainName: !GetAtt ultimate-matchups-fe-production-deploybucket.DomainName'
+            Id: !Ref ultimate-matchups-fe-production-deploybucket
+            S3OriginConfig:
+              OriginAccessIdentity: ''
+        DefaultRootObject: index.html
+        Enabled: true
+        # Configure the caching behavior for our CDN
+        DefaultCacheBehavior:
+          MinTTL: 86400 # 1 day
+          MaxTTL: 31536000 # 1 year
+          ForwardedValues:
+            QueryString: true
+          TargetOriginId: !Ref ultimate-matchups-fe-production-deploybucket
+          ViewerProtocolPolicy: "redirect-to-https" # force HTTPS
+  #=============================================================================
+  # CodeBuild Spec
+  #=============================================================================
+  CodeBuild:
+    Type: 'AWS::CodeBuild::Project'
+    Properties:
+      Name: !Sub ${AWS::StackName}-CodeBuild
+      ServiceRole: !GetAtt CodeBuildRole.Arn
+      Artifacts:
+        # The download source code for the build will come from CodePipeline
+        Type: CODEPIPELINE
+        Name: ultimate-matchups-fe-production-pipeline-artifact
+      Source:
+        Type: CODEPIPELINE
+      Environment:
+        # Linux container with node installed
+        ComputeType: BUILD_GENERAL1_SMALL
+        Type: LINUX_CONTAINER
+        Image: "aws/codebuild/nodejs:8.11.0"
+      Source:
+        Type: CODEPIPELINE
+        # what follows is what would be put in a codebuild.yml file
+        BuildSpec: !Sub |
+          version: 0.1
+          phases:
+            pre_build:
+              commands:
+                - echo installing source NPM dependencies...
+                - npm install
+            build:
+              commands:
+                - echo Build started on `date`
+                - npm run build
+            post_build:
+              commands:
+                # copy contents of /build to s3 production deployment bucket
+                - aws s3 cp --recursive --acl public-read ./build s3://${ultimate-matchups-fe-production-deploybucket}
+                # set the cache-control headers for service-worker.js to prevent browser caching
+                - > aws s3 cp --acl public-read --cache-control="max-age=0, no-cache, no-store, must-revalidate" ./build/service-worker.js s3://${ultimate-matchups-fe-production-deploybucket} 
+                # set the cache-control headers for index.html to prevent browser caching
+                - > aws s3 cp --acl public-read --cache-control="max-age=0, no-cache, no-store, must-revalidate" ./build/index.html s3://${ultimate-matchups-fe-production-deploybucket}
+                # invalidate the CloudFront cache for index.html and service-worker.js to force CloudFront to update its edge locations with the new versions
+                - > aws cloudfront create-invalidation --distribution-id ${Distribution} -- paths /index.html /service-worker.js
+          artifacts:
+            files:
+              - '**/*'
+            base-directory: build
+  #=============================================================================
+  # IAM role that allows CodeBuild to interact with S3, CloudWatch, and CloudFront
+  #=============================================================================
+  CodeBuildRole:
+    Type: AWS::IAM::FOLE
+    Properties:
+      AssumeRolePolicyDocument:
+        Version: "2012-10-17"
+        Statement:
+          -
+            Effect: Allow
+            Principal:
+              Service:
+                - "codebuild.amazonaws.com"
+            Action:
+              - "sts:AssumeRole"
+      Path: /service-role/
+      Policies:
+        - PolicyName: root
+          PolicyDocument:
+            Version: "2012-10-17"
+            Statement:
+              -
+                Effect: Allow
+                Action:
+                  - "s3:GetObject"
+                  - "s3:GetObjectVersion"
+                  - "s3:GetBucketVersioning"
+                  - "s3:PutObject"
+                Resource:
+                 - !GetAtt UltimateMatchupsFEProductionPipelineBucket.Arn
+                 - !Join ['', [!GetAtt UltimateMatchupsFEProductionPipelineBucket.Arn, "/*"]]
+              -
+                Effect: Allow
+                Action:
+                  - "s3:GetObject"
+                  - "s3:GetObjectVersion"
+                  - "s3:GetBucketVersioning"
+                  - "s3:PutObject"
+                  - "s3:PutObjectAc1"
+                Resource:
+                  - !GetAtt ultimate-matchups-fe-production-deploybucket.Arn
+                  - !Join ['', [!GetAtt ultimate-matchups-fe-production-deploybucket.Arn, "/*"]]
+              -
+                Effect: Allow
+                Action:
+                  - "logs:CreateLogGroup"
+                  - "logs:CreateLogStream"
+                  - "logs:PutLogEvents"
+                  - "cloudfront:CreateInvalidation"
+                Resource:
+                  - "*"
+  #=============================================================================
+  # CodePipeline Spec
+  #=============================================================================
+  CodePipeline:
+    Type: 'AWS::CodePipeline::Pipeline'
+    Properties:
+      RoleArn: !GetAtt CodePipeLineRole.Arn
+      ArtifactStore:
+        Location: !Ref UltimateMatchupsFEProductionPipelineBucket
+        Type: S3
+    Stages:
+      -
+        Name: Source
+        Actions:
+          -
+            Name: SourceAction
+            ActionTypeId:
+              Category: Source
+              Owner: ThirdParty
+              Provider: Github
+              Version: 1
+            OutPutArtifacts:
+              -
+                Name: UltimateMatchupsFEArtifact
+            Configuration:
+              Owner: !Ref GithubOwner
+              Repo: !Ref GithubRepo
+              Branch: main
+              OAuthToken: !Ref GithubOAuthToken
+          -
+            Name: Build
+            Actions:
+              -
+                Name: BuildAction
+                ActionTypeId:
+                  Category: Build
+                  Owner: AWS
+                  Version: 1
+                Provider: CodeBuild
+                InputArficats:
+                  -
+                    Name: UltimateMatchupsFEArtifact
+                OutputArtifacts:
+                  -
+                    Name: UltimateMatchupsFEBuildArtifact
+                Configuration:
+                  ProjectName: !Ref CodeBuild
+  #=============================================================================
+  # IAM role for pipeline
+  #=============================================================================
+  CodePipeLineRole:
+    Type: AWS::IAM::Role
+    Properties:
+      AssumeRolePolicyDocument:
+        Version: "2012-10-17"
+        Statement:
+          -
+            Effect: Allow
+            Principal:
+              Service:
+                - "codepipeline.amazonaws.com"
+            Action:
+              - "sts:AssumeRole"
+    Policies:
+      - PolicyName: root
+        PolicyDocument:
+          Version: "2012-10-17"
+          Statement:
+            -
+              Effect: Allow
+              Action:
+                - "s3:GetObject"
+                - "s3:GetObjectVersion"
+                - "s3:GetBucketVersioning"
+                - "s3:PutObject"
+              Resource:
+                - !GetAtt PiplelineBucket.Arn
+                - !Join ['', [!GetAtt UltimateMatchupsFEProductionPipelineBucket.Arn, "/*"]]
+            -
+              Effect: Allow
+              Action:
+                - "codebuild:BatchGetBuilds"
+                - "codebuild:StartBuild"
+              Resource: "*"
+  #=============================================================================
+  # S3 Bucket for Pipeline to store build artifacts
+  #=============================================================================
+  UltimateMatchupsFEProductionPipelineBucket:
+    Type: 'AWS::S3::Bucket'
+    Properties: {}
