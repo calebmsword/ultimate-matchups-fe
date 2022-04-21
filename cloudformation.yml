@@ -1,5 +1,15 @@
 # adpated from https://github.com/qswitcher/cloudformation_examples/blob/master/create_react_app.yml
-#   using the guid from https://medium.com/@jeffreyrussom/react-continuous-deployments-with-aws-codepipeline-f5034129ff0e
+#   using the guide from https://medium.com/@jeffreyrussom/react-continuous-deployments-with-aws-codepipeline-f5034129ff0e
+
+# Currently this creates a pipeline stack that deploys to an S3 bucket named "ultimatematchups.com"
+
+# TODO:
+# - Give all instances (buckets, pipelines, distributions, etc) names so that they don't have extremely ugly default names
+# - Create CodeDeploy instance, move post_build commands in buildspec to CodeDeploy (might have to make second artifact bucket, might not)
+# - Add bucket policy for deployment bucket
+# - Create second bucket with name "www.ultimatematchups.com" that redirects to "ultimatematchup.com"
+# - Configure two CDNs, created two hosted zones, and create a certificate in accordance to this guide: https://www.youtube.com/watch?v=mls8tiiI3uc&list=WL&index=24
+# - Create Paramter for the website domain name
 
 AWSTemplateFormatVersion: 2010-09-09
 Parameters:
@@ -53,32 +63,36 @@ Resources:
 
   #=============================================================================
   # CDN using CloudFront
+  # 
+  # Unfortunately insufficient if you use Route 53 to route a domain name to a CDN.
+  # I followed this tutorial (https://www.youtube.com/watch?v=mls8tiiI3uc&list=WL&index=24)
+  #   when creating the (two!) CDNs we needed for this project
   #=============================================================================
-  Distribution:
-    Type: "AWS::CloudFront::Distribution"
-    Properties:
-      DistributionConfig:
-        Origins:
-          -
-            # Use UmFeProdDeployBucket as CDN origin
-            DomainName: !GetAtt UmFeProdDeployBucket.DomainName
-            Id: !Ref UmFeProdDeployBucket
-            S3OriginConfig:
-              OriginAccessIdentity: ''
-        DefaultRootObject: index.html
-        Enabled: true
-        # Configure the caching behavior for our CDN
-        DefaultCacheBehavior:
-          MinTTL: 86400 # 1 day
-          MaxTTL: 31536000 # 1 year
-          ForwardedValues:
-            QueryString: true
-          TargetOriginId: !Ref UmFeProdDeployBucket
-          ViewerProtocolPolicy: "redirect-to-https" # force HTTPS
+  # Distribution:
+  #   Type: "AWS::CloudFront::Distribution"
+  #   Properties:
+  #     DistributionConfig:
+  #       Origins:
+  #         -
+  #           # Use UmFeProdDeployBucket as CDN origin
+  #           DomainName: !GetAtt UmFeProdDeployBucket.DomainName
+  #           Id: !Ref UmFeProdDeployBucket
+  #           S3OriginConfig:
+  #             OriginAccessIdentity: ''
+  #       DefaultRootObject: index.html
+  #       Enabled: true
+  #       # Configure the caching behavior for our CDN
+  #       DefaultCacheBehavior:
+  #         MinTTL: 86400 # 1 day
+  #         MaxTTL: 31536000 # 1 year
+  #         ForwardedValues:
+  #           QueryString: true
+  #         TargetOriginId: !Ref UmFeProdDeployBucket
+  #         ViewerProtocolPolicy: "redirect-to-https" # force HTTPS
   
   #=============================================================================
   # CodeBuild Spec
-  # we don't CodeDeploy, we deploy the application in the post_build phase :p
+  # we don't use CodeDeploy, we deploy the application in the post_build phase :p
   #=============================================================================
   CodeBuild:
     Type: 'AWS::CodeBuild::Project'
@@ -189,7 +203,7 @@ Resources:
                   - "*"
   
   #=============================================================================
-  # CodePipeline Spec
+  # CodePipeline instance
   #=============================================================================
   CodePipeline:
     Type: 'AWS::CodePipeline::Pipeline'

@@ -1,1 +1,0 @@
-export { axiosConfig as axios } from './axiosConfig'
