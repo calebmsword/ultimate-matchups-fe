@@ -2,10 +2,11 @@
 #   using the guide from https://medium.com/@jeffreyrussom/react-continuous-deployments-with-aws-codepipeline-f5034129ff0e
 
 # Currently this creates a pipeline stack that deploys to an S3 bucket named "ultimatematchups.com"
+# This file doesn't actually do anything; you upload the file as a template when creating a new CloudFormation stack in the AWS console. This file acts of documentation and doesn't configure anything in the current pipeline.
 
 # TODO:
 # - Give all instances (buckets, pipelines, distributions, etc) names so that they don't have extremely ugly default names
-# - Create CodeDeploy instance, move post_build commands in buildspec to CodeDeploy (might have to make second artifact bucket, might not)
+# - Create CodeDeploy instance, move post_build commands in buildspec to CodeDeploy (might have to make second artifact bucket, not sure)
 # - Add bucket policy for deployment bucket
 # - Create second bucket with name "www.ultimatematchups.com" that redirects to "ultimatematchup.com"
 # - Configure two CDNs, created two hosted zones, and create a certificate in accordance to this guide: https://www.youtube.com/watch?v=mls8tiiI3uc&list=WL&index=24

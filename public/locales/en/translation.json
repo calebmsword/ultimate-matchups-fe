@@ -1,0 +1,24 @@
+{
+    "landing": {
+        "welcome": "Welcome to Ultimate Matchups!",
+        "tagline": "The easiest way to create matchup charts for SSBU",
+        "register_button_text": "Join Ultimate Matchups today!",
+        "about_button_text": "What is this?",
+        "already_have_account": "Already have an account?",
+        "login_button_text": "Sign in"
+    },
+    "login": {
+        "title": "Enter credentials:",
+        "textbox_username": "username",
+        "textbox_password": "password",
+        "button_submit": "Login"
+    },
+    "register": {
+        "title": "Create new account",
+        "textbox-username": "username",
+        "textbox-email": "email",
+        "textbox-password_1": "password",
+        "textbox-password_2": "re-enter password",
+        "button-submit": "Register"
+    }
+}
