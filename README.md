@@ -8,16 +8,17 @@ Tech stack:
 - JavaScript
 - React
 - Create React App
-- Redux
-- Redux-Thunk
+- Redux Toolkit
+- RTK Query
 - React Router
 - react-beautiful-dnd
 - i18next
+- EmailJS
 - Jest
 - React Testing Library
 - AWS CloudFormation
-- AWS CloudFront
-- AWS Route 53
 - AWS CodePipeline
 - AWS CodeBuild
 - AWS S3
+- AWS CloudFront
+- AWS Route 53
