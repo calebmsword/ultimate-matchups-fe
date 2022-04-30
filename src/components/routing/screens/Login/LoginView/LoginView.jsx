@@ -10,7 +10,7 @@ export const LoginView = () => {
 
   const loginHandler = e => {
     e.preventDefault()
-    navigate('/login')
+    navigate('/home')
   }
 
   return (

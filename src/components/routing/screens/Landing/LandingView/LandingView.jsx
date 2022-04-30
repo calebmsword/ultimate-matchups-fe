@@ -6,6 +6,10 @@ export const LandingView = () => {
 
     return (
             <div>
+                <p>
+                    I currently implemented a landing page but I might remove it. We probably should just check local storage to check if people are loggedIn and either redirect to /home or /login.
+                </p>
+
                 <div>
                     {t('landing.welcome')}
                 </div>

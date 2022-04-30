@@ -1,10 +1,13 @@
-import { Suspense } from 'react'
 import { BrowserRouter } from 'react-router-dom'
-import { Routes, Route, Redirect } from 'react-router'
+import { Routes, Route } from 'react-router'
 import { LandingContainer } from '../screens/Landing/LandingContainer'
 import { LoginContainer } from '../screens/Login/LoginContainer'
 import { RegisterContainer } from '../screens/Register/RegisterContainer'
-// import { About } from '../screens/About'
+import { DashboardContainer } from '../screens/Dashboard/DashboardContainer'
+import { SettingsContainer } from '../screens/Settings/SettingsContainer'
+import { AboutContainer } from '../screens/About/AboutContainer'
+import { EditorContainer } from '../screens/Editor/EditorContainer'
+
 
 export const Router = () => {
     return (
@@ -13,18 +16,13 @@ export const Router = () => {
                 <Route path='/' element={<LandingContainer />} />
                 <Route path='login' element={<LoginContainer />} />
                 <Route path='register' element={<RegisterContainer />} />
-                {/* <Route exact path='/dashboard' component={Dashboard} /> */}
-                {/* <Route exact path='/editor' component={MatchupEditor} /> */}
-                {/* <Route exact path='/settings' component={Settings} /> */}
-                {/* <Route exact path='about' element={
-                    <Suspense fallback={<div>Ayy lmao</div>} >
-                        <About />
-                    </Suspense>
-                } />  */}
-                {/* <Route component={NoMatch} /> */}
+                <Route path='home' element={<DashboardContainer />} />
+                <Route path='editor' element={<EditorContainer />} />
+                <Route path='settings' element={<SettingsContainer />} />
+                <Route path='about' element={<AboutContainer />} />
+                {/* <Route element={NoMatch} /> */}
                
             </Routes>
         </BrowserRouter>
-        // <div>Hi</div>
     ) 
 }

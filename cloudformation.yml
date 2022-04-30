@@ -4,6 +4,9 @@
 # Currently this creates a pipeline stack that deploys to an S3 bucket named "ultimatematchups.com"
 # This file doesn't actually do anything; you upload the file as a template when creating a new CloudFormation stack in the AWS console. This file acts of documentation and doesn't configure anything in the current pipeline.
 
+# TODO - URGENT!
+# Update BuildSpec in CodeBuild instance so that it invalidates the caches for the TWO distributions I made in the AWS console
+
 # TODO:
 # - Give all instances (buckets, pipelines, distributions, etc) names so that they don't have extremely ugly default names
 # - Create CodeDeploy instance, move post_build commands in buildspec to CodeDeploy (might have to make second artifact bucket, not sure)

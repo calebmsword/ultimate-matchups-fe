@@ -1,10 +1,10 @@
 import { Suspense } from "react"
-import { LoadingCircle } from '../../../../snippets/LoadingCircle'
-import { LandingView } from "../LandingView"
+import { LoadingSpinner } from '../../../../snippets/LoadingSpinner'
+import { LandingView } from '../LandingView'
 
 export const LandingContainer = () => {
     return (
-        <Suspense fallback={<LoadingCircle />}>
+        <Suspense fallback={<LoadingSpinner />}>
             <LandingView />
         </Suspense>
     )

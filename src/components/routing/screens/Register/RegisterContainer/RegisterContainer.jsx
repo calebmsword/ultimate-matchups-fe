@@ -1,10 +1,10 @@
 import { Suspense } from "react"
-import { LoadingCircle } from "../../../../snippets/LoadingCircle"
+import { LoadingSpinner } from "../../../../snippets/LoadingSpinner"
 import { RegisterView } from "../RegisterView"
 
 export const RegisterContainer = () => {
     return (
-        <Suspense fallback={<LoadingCircle />}>
+        <Suspense fallback={<LoadingSpinner />}>
             <RegisterView />
         </Suspense>
     )
