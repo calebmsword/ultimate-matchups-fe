@@ -22,11 +22,12 @@ export const LeftHeader = () => {
         alignItems: 'center'
       }}
     >
-      <div onClick={goBack} style={{ cursor: 'pointer' }} >back button</div>
-      <img width='100' src='https://dynamic.brandcrowd.com/asset/logo/c3cf1bd1-4261-4d85-a6c6-52dbce75799d/logo-search-grid-1x?v=637678103961270000' />
-      <div style={{margin: '0px 5px'}}>Save</div>
-      <div style={{margin: '0px 5px'}}>Options</div>
-      <div style={{margin: '0px 5px'}}>Add Tier</div>
+      <div onClick={goBack} style={{ cursor: 'pointer', margin: '0px 5px', padding: '5px', border: '1px solid white', borderRadius: '5px' }} >back button</div>
+      {/* <img width='100' src='https://dynamic.brandcrowd.com/asset/logo/c3cf1bd1-4261-4d85-a6c6-52dbce75799d/logo-search-grid-1x?v=637678103961270000' /> */}
+      <div style={{margin: '0px 5px', padding: '5px', border: '1px solid white'}}>Save</div>
+      <div style={{margin: '0px 5px', padding: '5px', border: '1px solid white'}}>Options</div>
+      <div style={{margin: '0px 5px', padding: '5px', border: '1px solid white'}}>Add Row</div>
+      <div style={{margin: '0px 5px', padding: '5px', border: '1px solid white'}}>Export MU chart</div>
     </div>
   )
 }
