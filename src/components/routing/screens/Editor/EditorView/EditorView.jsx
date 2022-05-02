@@ -48,11 +48,13 @@ export const EditorView = () => {
   const leftPanelRef = useRef();
   const rightPanelRef = useRef();
   
-  const [leftPanelWidth, setLeftPanelWidth] = useState()
-  const [rightPanelWidth, setRightPanelWidth] = useState()
+  const [leftPanelWidth, setLeftPanelWidth] = useState(leftPanelRef.current?.offsetWidth)
+  const [rightPanelWidth, setRightPanelWidth] = useState(rightPanelRef.current?.offsetWidth)
   
   const [leftPanelColumns, setLeftPanelColumns] = useState()
   const [rightPanelColumns, setRightPanelColumns] = useState()
+
+  const [showRightPanel, setShowRightPanel] = useState(true)
 
   /**
    * Custom collision detection strategy optimized for multiple containers
@@ -155,9 +157,12 @@ export const EditorView = () => {
   }, [items]);
 
   // update state when panel widths are changed by dragging the gutter
-  const onGutterDrag = () => {
+  const onGutterDrag = (e) => {
+    const [currentLeft, currentRight] = e;
     setLeftPanelWidth(leftPanelRef.current?.offsetWidth)
     setRightPanelWidth(rightPanelRef.current?.offsetWidth)
+    setLeft(currentLeft)
+    setRight(currentRight)
   }
 
   /**
@@ -183,18 +188,33 @@ export const EditorView = () => {
   const updatePanelWidths = () => {
     setLeftPanelColumns(determinePanelColumns(leftPanelRef))
     setRightPanelColumns(determinePanelColumns(rightPanelRef))
+    setPercent(( leftPanelRef.current?.offsetWidth  ) / (leftPanelRef.current?.offsetWidth + rightPanelRef.current?.offsetWidth + 10))
   }
+
+  const [percent, setPercent] = useState(( leftPanelWidth ) / (leftPanelWidth + rightPanelWidth + 10))
+
+  const [transition, setTransition] = useState('500ms width ease-in-out')
+
+
+  const [left, setLeft] = useState(75)
+  const [right, setRight] = useState(25)
 
   // onGutterDrag changes the state (leftPanelWidth/rightPanelWidth), on which we should run this effect
   useEffect( () => {
     updatePanelWidths()
   }, [leftPanelWidth, rightPanelWidth])
   
+  const onResize = () => {
+    setTransition('')
+    updatePanelWidths()
+    setTransition('500ms width ease-in-out')
+  }
+
   // update panel widths whenver we resize the window; to do this, stick an event listener for 'resize' on component mount
   useEffect( () => {
-    window.addEventListener('resize', updatePanelWidths)
-    return () => window.removeEventListener('resize', updatePanelWidths);
-  }, [updatePanelWidths]) // you get a warning if you don't put updatePanelWidths in the dependency array
+    window.addEventListener('resize', onResize)
+    return () => window.removeEventListener('resize', onResize);
+  }, [onResize]) // you get a warning if you don't put updatePanelWidths in the dependency array
 
   return (
     <DndContext
@@ -309,15 +329,16 @@ export const EditorView = () => {
       onDragCancel={onDragCancel}
     >
       <Split 
-        className='test'
         style={{
           display:'flex', 
           flexDirection:'row', 
           height: '100vh',
-          width: '100wh',
+          width: showRightPanel ? '100vw' : `calc(100vw / ${percent})`,
+          transition: transition,
         }} 
         gutterSize={10}
         onDrag={onGutterDrag}
+        sizes={[left,right]}
       >
         <div ref={leftPanelRef}
           style={{
@@ -326,7 +347,13 @@ export const EditorView = () => {
             height: '100%',
           }}
         >
-          <LeftHeader />
+          <LeftHeader 
+            onClick={() => {
+              setShowRightPanel( value => !value )
+            }}
+            showRightPanel={showRightPanel}
+            right={rightPanelWidth}
+          />
           <MatchupTiers 
             containers={containers}
             leftPanelColumns={leftPanelColumns}
@@ -352,8 +379,8 @@ export const EditorView = () => {
         
       </Split>
       
-      { /* Displays the translucent "ghost" card when dragging an item */ }
-      <RenderDragOverlay activeId={activeId}/>
+      { /* Displays the character card under the mouse when dragging the item */ }
+      <RenderDragOverlay activeId={activeId} />
     </DndContext>
   );
 }
