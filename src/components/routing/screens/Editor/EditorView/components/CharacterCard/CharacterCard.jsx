@@ -12,6 +12,7 @@ export const CharacterCard = React.memo( ({ id, index }) => {
     transition
   } = useSortable({ id })
 
+  if (isDragging) console.log(isDragging);
   return (
     <li
       ref={setNodeRef}

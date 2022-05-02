@@ -11,9 +11,12 @@ export const RightHeader = () => {
         textAlign: 'center',
         display: 'flex',
         justifyContent: 'center',
-        alignItems: 'center'
+        alignItems: 'center',
+        overflow: 'hidden',
       }}>
-      <input type='text' placeholder='search bar'/> <button>sort</button>
+      <div style={{width: '100%'}}>
+        <input type='text' placeholder='search bar' /> <button>sort</button>
+      </div>
     </div>
   )
 }
