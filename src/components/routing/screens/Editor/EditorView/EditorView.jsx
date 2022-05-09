@@ -1,386 +1,403 @@
-import React, {useCallback, useEffect, useRef, useState} from 'react';
+import React, { useCallback, useEffect, useRef, useState } from 'react';
 import {
-  closestCenter,
-  pointerWithin,
-  rectIntersection,
-  DndContext,
-  getFirstCollision,
-  KeyboardSensor,
-  MouseSensor,
-  TouchSensor,
-  useSensors,
-  useSensor,
-  MeasuringStrategy,
+	closestCenter,
+	pointerWithin,
+	rectIntersection,
+	DndContext,
+	getFirstCollision,
+	KeyboardSensor,
+	MouseSensor,
+	TouchSensor,
+	useSensors,
+	useSensor,
+	MeasuringStrategy,
 } from '@dnd-kit/core';
-import {
-  arrayMove,
-} from '@dnd-kit/sortable';
+import { arrayMove } from '@dnd-kit/sortable';
 import { coordinateGetter } from './utilities/multipleContainersKeyboardCoordinates';
 import Split from 'react-split';
 
-import './EditorView.css'
+import './EditorView.css';
 
 import { MatchupTiers } from './components/MatchupTiers';
 import { LeftHeader } from './components/LeftHeader';
 import { RightHeader } from './components/RightHeader';
 import { UnplacedCharacters } from './components/UnplacedCharacters';
 
-import { characterList } from '../../../../../entities/characters'
+import { characterList } from '../../../../../entities/characters';
 import { RenderDragOverlay } from './components/RenderDragOverlay';
 
 export const EditorView = () => {
-  const [items, setItems] = useState(   
-    () => ({
-      unplaced: characterList.map(item => item.id.toString()),
-      minus2: [],
-      minus1: [],
-      even: [],
-      plus1: [],
-      plus2: [],
-    })
-  );
+	const [items, setItems] = useState(() => ({
+		unplaced: characterList.map((item) => item.id.toString()),
+		'-2': [],
+		'-1': [],
+		Even: [],
+		'+1': [],
+		'+2': [],
+	}));
 
-  const [containers, setContainers] = useState(Object.keys(items));
-  const [activeId, setActiveId] = useState(null);
-  const lastOverId = useRef(null);
-  const recentlyMovedToNewContainer = useRef(false);  
-  
-  const leftPanelRef = useRef();
-  const rightPanelRef = useRef();
-  
-  const [leftPanelWidth, setLeftPanelWidth] = useState(leftPanelRef.current?.offsetWidth)
-  const [rightPanelWidth, setRightPanelWidth] = useState(rightPanelRef.current?.offsetWidth)
-  
-  const [leftPanelColumns, setLeftPanelColumns] = useState()
-  const [rightPanelColumns, setRightPanelColumns] = useState()
+	const [containers, setContainers] = useState(Object.keys(items));
+	const [activeId, setActiveId] = useState(null);
+	const lastOverId = useRef(null);
+	const recentlyMovedToNewContainer = useRef(false);
 
-  const [showRightPanel, setShowRightPanel] = useState(true)
+	const leftPanelRef = useRef();
+	const rightPanelRef = useRef();
 
-  /**
-   * Custom collision detection strategy optimized for multiple containers
-   *
-   * - First, find any droppable containers intersecting with the pointer.
-   * - If there are none, find intersecting containers with the active draggable.
-   * - If there are no intersecting containers, return the last matched intersection
-   *
-   */
-  const collisionDetectionStrategy = useCallback(
-    (args) => {
-      if (activeId && activeId in items) {
-        return closestCenter({
-          ...args,
-          droppableContainers: args.droppableContainers.filter(
-            (container) => container.id in items
-          ),
-        });
-      }
+	const [leftPanelWidth, setLeftPanelWidth] = useState(
+		leftPanelRef.current?.offsetWidth
+	);
+	const [rightPanelWidth, setRightPanelWidth] = useState(
+		rightPanelRef.current?.offsetWidth
+	);
 
-      // Start by finding any intersecting droppable
-      const pointerIntersections = pointerWithin(args);
-      const intersections =
-        pointerIntersections.length > 0
-          ? // If there are droppables intersecting with the pointer, return those
-            pointerIntersections
-          : rectIntersection(args);
-      let overId = getFirstCollision(intersections, 'id');
+	const [leftPanelColumns, setLeftPanelColumns] = useState();
+	const [rightPanelColumns, setRightPanelColumns] = useState();
 
-      if (overId != null) {
+	const [showRightPanel, setShowRightPanel] = useState(true);
 
-        if (overId in items) {
-          const containerItems = items[overId];
+	/**
+	 * Custom collision detection strategy optimized for multiple containers
+	 *
+	 * - First, find any droppable containers intersecting with the pointer.
+	 * - If there are none, find intersecting containers with the active draggable.
+	 * - If there are no intersecting containers, return the last matched intersection
+	 *
+	 */
+	const collisionDetectionStrategy = useCallback(
+		(args) => {
+			if (activeId && activeId in items) {
+				return closestCenter({
+					...args,
+					droppableContainers: args.droppableContainers.filter(
+						(container) => container.id in items
+					),
+				});
+			}
 
-          // If a container is matched and it contains items (columns 'A', 'B', 'C')
-          if (containerItems.length > 0) {
-            // Return the closest droppable within that container
-            overId = closestCenter({
-              ...args,
-              droppableContainers: args.droppableContainers.filter(
-                (container) =>
-                  container.id !== overId &&
-                  containerItems.includes(container.id)
-              ),
-            })[0]?.id;
-            
-          }
-        }
+			// Start by finding any intersecting droppable
+			const pointerIntersections = pointerWithin(args);
+			const intersections =
+				pointerIntersections.length > 0
+					? // If there are droppables intersecting with the pointer, return those
+					  pointerIntersections
+					: rectIntersection(args);
+			let overId = getFirstCollision(intersections, 'id');
 
-        lastOverId.current = overId;
+			if (overId != null) {
+				if (overId in items) {
+					const containerItems = items[overId];
 
-        return [{id: overId}];
-      }
+					// If a container is matched and it contains items (columns 'A', 'B', 'C')
+					if (containerItems.length > 0) {
+						// Return the closest droppable within that container
+						overId = closestCenter({
+							...args,
+							droppableContainers:
+								args.droppableContainers.filter(
+									(container) =>
+										container.id !== overId &&
+										containerItems.includes(container.id)
+								),
+						})[0]?.id;
+					}
+				}
 
-      // When a draggable item moves to a new container, the layout may shift
-      // and the `overId` may become `null`. We manually set the cached `lastOverId`
-      // to the id of the draggable item that was moved to the new container, otherwise
-      // the previous `overId` will be returned which can cause items to incorrectly shift positions
-      if (recentlyMovedToNewContainer.current) {
-        lastOverId.current = activeId;
-      }
+				lastOverId.current = overId;
 
-      // If no droppable is matched, return the last match
-      return lastOverId.current ? [{id: lastOverId.current}] : [];
-    },
-    [activeId, items]
-  );
-  const [clonedItems, setClonedItems] = useState(null);
-  const sensors = useSensors(
-    useSensor(MouseSensor),
-    useSensor(TouchSensor),
-    useSensor(KeyboardSensor, {
-      coordinateGetter,
-    })
-  );
-  const findContainer = (id) => {
-    if (id in items) {
-      return id;
-    }
+				return [{ id: overId }];
+			}
 
-    return Object.keys(items).find((key) => items[key].includes(id));
-  };
+			// When a draggable item moves to a new container, the layout may shift
+			// and the `overId` may become `null`. We manually set the cached `lastOverId`
+			// to the id of the draggable item that was moved to the new container, otherwise
+			// the previous `overId` will be returned which can cause items to incorrectly shift positions
+			if (recentlyMovedToNewContainer.current) {
+				lastOverId.current = activeId;
+			}
 
-  const onDragCancel = () => {
-    if (clonedItems) {
-      // Reset items to their original state in case items have been
-      // Dragged across containers
-      setItems(clonedItems);
-    }
+			// If no droppable is matched, return the last match
+			return lastOverId.current ? [{ id: lastOverId.current }] : [];
+		},
+		[activeId, items]
+	);
+	const [clonedItems, setClonedItems] = useState(null);
+	const sensors = useSensors(
+		useSensor(MouseSensor),
+		useSensor(TouchSensor),
+		useSensor(KeyboardSensor, {
+			coordinateGetter,
+		})
+	);
+	const findContainer = (id) => {
+		if (id in items) {
+			return id;
+		}
 
-    setActiveId(null);
-    setClonedItems(null);
-  };
+		return Object.keys(items).find((key) => items[key].includes(id));
+	};
 
-  // not yet sure what this is for
-  useEffect(() => {
-    requestAnimationFrame(() => {
-      recentlyMovedToNewContainer.current = false;
-    });
-  }, [items]);
+	const onDragCancel = () => {
+		if (clonedItems) {
+			// Reset items to their original state in case items have been
+			// Dragged across containers
+			setItems(clonedItems);
+		}
 
-  // update state when panel widths are changed by dragging the gutter
-  const onGutterDrag = (e) => {
-    const [currentLeft, currentRight] = e;
-    setLeftPanelWidth(leftPanelRef.current?.offsetWidth)
-    setRightPanelWidth(rightPanelRef.current?.offsetWidth)
-    setLeft(currentLeft)
-    setRight(currentRight)
-  }
+		setActiveId(null);
+		setClonedItems(null);
+	};
 
-  /**
-   * Determine the number of columns to display in a container
-   * 
-   * @param {*} panelRef : the ref passed to the div representing a panel
-   * @returns the number of panels available to containers in that panel
-   */
-  const determinePanelColumns = (panelRef) => {
-    if (!panelRef.current?.offsetWidth) return;
-    const width = panelRef.current?.offsetWidth
-    const itemWidth = 50 // MAGIC NUMBER WARNING! should grab from css somehow
-    const border = 1 // MAGIC NUMBER WARNING! should grab from css somehow
-    const margin = 0 // MAGIC NUMBER WARNING! should grab from css somehow
-    const paddingLeft = 10 // MAGIC NUMBER WARNING! should grab from css somehow
-    const paddingRight = 10 // MAGIC NUMBER WARNING! should grab from css somehow
-    const gridGap = 5 // MAGIC NUMBER WARNING! should grab from css somehow
-    const scrollbarWidth = 0 // MAGIC NUMBER WARNING! should grab from css somehow
-    const fixedWidth = width - 2*border - 2*margin - paddingLeft - paddingRight - scrollbarWidth
-    return Math.floor(fixedWidth/(itemWidth + 2*gridGap))
-  }
-  
-  const updatePanelWidths = () => {
-    setLeftPanelColumns(determinePanelColumns(leftPanelRef))
-    setRightPanelColumns(determinePanelColumns(rightPanelRef))
-    setPercent(( leftPanelRef.current?.offsetWidth  ) / (leftPanelRef.current?.offsetWidth + rightPanelRef.current?.offsetWidth + 10))
-  }
+	// not yet sure what this is for
+	useEffect(() => {
+		requestAnimationFrame(() => {
+			recentlyMovedToNewContainer.current = false;
+		});
+	}, [items]);
 
-  const [percent, setPercent] = useState(( leftPanelWidth ) / (leftPanelWidth + rightPanelWidth + 10))
+	// update state when panel widths are changed by dragging the gutter
+	const onGutterDrag = (e) => {
+		const [currentLeft, currentRight] = e;
+		setLeftPanelWidth(leftPanelRef.current?.offsetWidth);
+		setRightPanelWidth(rightPanelRef.current?.offsetWidth);
+		setLeft(currentLeft);
+		setRight(currentRight);
+	};
 
-  const [transition, setTransition] = useState('500ms width ease-in-out')
+	/**
+	 * Determine the number of columns to display in a container
+	 *
+	 * @param {*} panelRef : the ref passed to the div representing a panel
+	 * @returns the number of panels available to containers in that panel
+	 */
+	const determinePanelColumns = (panelRef) => {
+		if (!panelRef.current?.offsetWidth) return;
+		const width = panelRef.current?.offsetWidth;
+		const itemWidth = 50; // MAGIC NUMBER WARNING! should grab from css somehow
+		const border = 1; // MAGIC NUMBER WARNING! should grab from css somehow
+		const margin = 0; // MAGIC NUMBER WARNING! should grab from css somehow
+		const paddingLeft = 10; // MAGIC NUMBER WARNING! should grab from css somehow
+		const paddingRight = 10; // MAGIC NUMBER WARNING! should grab from css somehow
+		const gridGap = 5; // MAGIC NUMBER WARNING! should grab from css somehow
+		const scrollbarWidth = 0; // MAGIC NUMBER WARNING! should grab from css somehow
+		const fixedWidth =
+			width -
+			2 * border -
+			2 * margin -
+			paddingLeft -
+			paddingRight -
+			scrollbarWidth;
+		return Math.floor(fixedWidth / (itemWidth + 2 * gridGap));
+	};
 
+	const updatePanelWidths = () => {
+		setLeftPanelColumns(determinePanelColumns(leftPanelRef));
+		setRightPanelColumns(determinePanelColumns(rightPanelRef));
+		setPercent(
+			leftPanelRef.current?.offsetWidth /
+				(leftPanelRef.current?.offsetWidth +
+					rightPanelRef.current?.offsetWidth +
+					10)
+		);
+	};
 
-  const [left, setLeft] = useState(75)
-  const [right, setRight] = useState(25)
+	const [percent, setPercent] = useState(
+		leftPanelWidth / (leftPanelWidth + rightPanelWidth + 10)
+	);
 
-  // onGutterDrag changes the state (leftPanelWidth/rightPanelWidth), on which we should run this effect
-  useEffect( () => {
-    updatePanelWidths()
-  }, [leftPanelWidth, rightPanelWidth])
-  
-  const onResize = () => {
-    setTransition('')
-    updatePanelWidths()
-    setTransition('500ms width ease-in-out')
-  }
+	const [transition, setTransition] = useState('500ms width ease-in-out');
 
-  // update panel widths whenver we resize the window; to do this, stick an event listener for 'resize' on component mount
-  useEffect( () => {
-    window.addEventListener('resize', onResize)
-    return () => window.removeEventListener('resize', onResize);
-  }, [onResize]) // you get a warning if you don't put updatePanelWidths in the dependency array
+	const [left, setLeft] = useState(75);
+	const [right, setRight] = useState(25);
 
-  return (
-    <DndContext
-      sensors={sensors}
-      collisionDetection={collisionDetectionStrategy}
-      measuring={{
-        droppable: {
-          strategy: MeasuringStrategy.Always,
-        },
-      }}
-      onDragStart={({active}) => {
-        setActiveId(active.id);
-        setClonedItems(items);
-      }}
-      onDragOver={({active, over}) => {
-        const overId = over?.id;
+	// onGutterDrag changes the state (leftPanelWidth/rightPanelWidth), on which we should run this effect
+	useEffect(() => {
+		updatePanelWidths();
+	}, [leftPanelWidth, rightPanelWidth]);
 
-        const overContainer = findContainer(overId);
-        const activeContainer = findContainer(active.id);
+	const onResize = () => {
+		setTransition('');
+		updatePanelWidths();
+		setTransition('500ms width ease-in-out');
+	};
 
-        if (!overContainer || !activeContainer) {
-          return;
-        }
+	// update panel widths whenver we resize the window; to do this, stick an event listener for 'resize' on component mount
+	useEffect(() => {
+		window.addEventListener('resize', onResize);
+		return () => window.removeEventListener('resize', onResize);
+	}, [onResize]); // you get a warning if you don't put updatePanelWidths in the dependency array
 
-        if (activeContainer !== overContainer) {
-          setItems((items) => {
-            const activeItems = items[activeContainer];
-            const overItems = items[overContainer];
-            const overIndex = overItems.indexOf(overId);
-            const activeIndex = activeItems.indexOf(active.id);
+	return (
+		<DndContext
+			sensors={sensors}
+			collisionDetection={collisionDetectionStrategy}
+			measuring={{
+				droppable: {
+					strategy: MeasuringStrategy.Always,
+				},
+			}}
+			onDragStart={({ active }) => {
+				setActiveId(active.id);
+				setClonedItems(items);
+			}}
+			onDragOver={({ active, over }) => {
+				const overId = over?.id;
 
-            let newIndex;
+				const overContainer = findContainer(overId);
+				const activeContainer = findContainer(active.id);
 
-            if (overId in items) {
-              newIndex = overItems.length + 1;
-            } else {
-              const isBelowOverItem =
-                over &&
-                active.rect.current.translated &&
-                active.rect.current.translated.top >
-                  over.rect.top + over.rect.height;
+				if (!overContainer || !activeContainer) {
+					return;
+				}
 
-              const modifier = isBelowOverItem ? 1 : 0;
+				if (activeContainer !== overContainer) {
+					setItems((items) => {
+						const activeItems = items[activeContainer];
+						const overItems = items[overContainer];
+						const overIndex = overItems.indexOf(overId);
+						const activeIndex = activeItems.indexOf(active.id);
 
-              newIndex =
-                overIndex >= 0 ? overIndex + modifier : overItems.length + 1;
-            }
+						let newIndex;
 
-            recentlyMovedToNewContainer.current = true;
+						if (overId in items) {
+							newIndex = overItems.length + 1;
+						} else {
+							const isBelowOverItem =
+								over &&
+								active.rect.current.translated &&
+								active.rect.current.translated.top >
+									over.rect.top + over.rect.height;
 
-            return {
-              ...items,
-              [activeContainer]: items[activeContainer].filter(
-                (item) => item !== active.id
-              ),
-              [overContainer]: [
-                ...items[overContainer].slice(0, newIndex),
-                items[activeContainer][activeIndex],
-                ...items[overContainer].slice(
-                  newIndex,
-                  items[overContainer].length
-                ),
-              ],
-            };
-          });
-        }
-      }}
-      onDragEnd={({active, over}) => {
-        if (active.id in items && over?.id) {
-          setContainers((containers) => {
-            const activeIndex = containers.indexOf(active.id);
-            const overIndex = containers.indexOf(over.id);
+							const modifier = isBelowOverItem ? 1 : 0;
 
-            return arrayMove(containers, activeIndex, overIndex);
-          });
-        }
+							newIndex =
+								overIndex >= 0
+									? overIndex + modifier
+									: overItems.length + 1;
+						}
 
-        const activeContainer = findContainer(active.id);
+						recentlyMovedToNewContainer.current = true;
 
-        if (!activeContainer) {
-          setActiveId(null);
-          return;
-        }
+						return {
+							...items,
+							[activeContainer]: items[activeContainer].filter(
+								(item) => item !== active.id
+							),
+							[overContainer]: [
+								...items[overContainer].slice(0, newIndex),
+								items[activeContainer][activeIndex],
+								...items[overContainer].slice(
+									newIndex,
+									items[overContainer].length
+								),
+							],
+						};
+					});
+				}
+			}}
+			onDragEnd={({ active, over }) => {
+				if (active.id in items && over?.id) {
+					setContainers((containers) => {
+						const activeIndex = containers.indexOf(active.id);
+						const overIndex = containers.indexOf(over.id);
 
-        const overId = over?.id;
+						return arrayMove(containers, activeIndex, overIndex);
+					});
+				}
 
-        if (!overId) {
-          setActiveId(null);
-          return;
-        }
+				const activeContainer = findContainer(active.id);
 
-        const overContainer = findContainer(overId);
+				if (!activeContainer) {
+					setActiveId(null);
+					return;
+				}
 
-        if (overContainer) {
-          const activeIndex = items[activeContainer].indexOf(active.id);
-          const overIndex = items[overContainer].indexOf(overId);
+				const overId = over?.id;
 
-          if (activeIndex !== overIndex) {
-            setItems((items) => ({
-              ...items,
-              [overContainer]: arrayMove(
-                items[overContainer],
-                activeIndex,
-                overIndex
-              ),
-            }));
-          }
-        }
+				if (!overId) {
+					setActiveId(null);
+					return;
+				}
 
-        setActiveId(null);
-      }}
-      onDragCancel={onDragCancel}
-    >
-      <Split 
-        style={{
-          display:'flex', 
-          flexDirection:'row', 
-          height: '100vh',
-          width: showRightPanel ? '100vw' : `calc(100vw / ${percent})`,
-          transition: transition,
-        }} 
-        gutterSize={10}
-        onDrag={onGutterDrag}
-        sizes={[left,right]}
-      >
-        <div ref={leftPanelRef}
-          style={{
-            boxSizing: 'border-box',
-            gridAutoFlow: 'row',
-            height: '100%',
-          }}
-        >
-          <LeftHeader 
-            onClick={() => {
-              setShowRightPanel( value => !value )
-            }}
-            showRightPanel={showRightPanel}
-            right={rightPanelWidth}
-          />
-          <MatchupTiers 
-            containers={containers}
-            leftPanelColumns={leftPanelColumns}
-            items={items}
-          />
-        </div>
+				const overContainer = findContainer(overId);
 
-          
-        <div ref={rightPanelRef}
-          style={{
-            boxSizing: 'border-box',
-            gridAutoFlow: 'row',
-            height: '100%',
-          }}
-        >
-          <RightHeader />
-          <UnplacedCharacters 
-            containerId={containers[0]}
-            items={items}
-            columns={rightPanelColumns}
-          />
-        </div>
-        
-      </Split>
-      
-      { /* Displays the character card under the mouse when dragging the item */ }
-      <RenderDragOverlay activeId={activeId} />
-    </DndContext>
-  );
-}
+				if (overContainer) {
+					const activeIndex = items[activeContainer].indexOf(
+						active.id
+					);
+					const overIndex = items[overContainer].indexOf(overId);
+
+					if (activeIndex !== overIndex) {
+						setItems((items) => ({
+							...items,
+							[overContainer]: arrayMove(
+								items[overContainer],
+								activeIndex,
+								overIndex
+							),
+						}));
+					}
+				}
+
+				setActiveId(null);
+			}}
+			onDragCancel={onDragCancel}
+		>
+			<Split
+				style={{
+					display: 'flex',
+					flexDirection: 'row',
+					height: '100vh',
+					width: showRightPanel
+						? '100vw'
+						: `calc(100vw / ${percent})`,
+					transition: transition,
+				}}
+				gutterSize={10}
+				onDrag={onGutterDrag}
+				sizes={[left, right]}
+			>
+				<div
+					ref={leftPanelRef}
+					style={{
+						boxSizing: 'border-box',
+						gridAutoFlow: 'row',
+						height: '100%',
+					}}
+				>
+					<LeftHeader
+						onClick={() => {
+							setShowRightPanel((value) => !value);
+						}}
+						showRightPanel={showRightPanel}
+						right={rightPanelWidth}
+					/>
+					<MatchupTiers
+						containers={containers}
+						leftPanelColumns={leftPanelColumns}
+						items={items}
+					/>
+				</div>
+
+				<div
+					ref={rightPanelRef}
+					style={{
+						boxSizing: 'border-box',
+						gridAutoFlow: 'row',
+						height: '100%',
+					}}
+				>
+					<RightHeader />
+					<UnplacedCharacters
+						containerId={containers[0]}
+						items={items}
+						columns={rightPanelColumns}
+					/>
+				</div>
+			</Split>
+
+			{/* Displays the character card under the mouse when dragging the item */}
+			<RenderDragOverlay activeId={activeId} />
+		</DndContext>
+	);
+};
