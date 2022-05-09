@@ -18,7 +18,7 @@ export const LeftHeader = ({ onClick, right, showRightPanel }) => {
 					<img src={logo} className='HeaderLogo' />
 				</div>
 				<div className='RightSection'>
-					<span className='CharacterName'>Your Mom</span>
+					<span className='CharacterName'>Diddy Kong</span>
 					<img
 						src='https://media.discordapp.net/attachments/859799626994679838/973356414833655848/20220509_185025.jpg'
 						className='CharacterImg'
