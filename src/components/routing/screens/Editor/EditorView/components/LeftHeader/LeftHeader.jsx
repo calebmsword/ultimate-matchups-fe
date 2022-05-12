@@ -1,34 +1,44 @@
-import { useNavigate } from 'react-router'
+import { useNavigate } from 'react-router';
 
-import './LeftHeader.css'
+import './LeftHeader.css';
+import logo from '../../../../../../../assets/logo.png';
 
 export const LeftHeader = ({ onClick, right, showRightPanel }) => {
-  const navigate = useNavigate()
+	const navigate = useNavigate();
 
-  const goBack = () => {
-    navigate(-1)
-  }
+	const goBack = () => {
+		navigate(-1);
+	};
 
-  return (
-    <div 
-      className='LeftHeader'
-      style={{
-        height: '100px',
-        backgroundColor: '#264040',
-        color: 'white',
-        // textAlign: 'center',
-        display: 'flex',
-        justifyContent: 'center',
-        alignItems: 'center'
-      }}
-    >
-      <div onClick={goBack} style={{ cursor: 'pointer', margin: '0px 5px', padding: '5px', border: '1px solid white', borderRadius: '5px' }} > ← back </div>
-      {/* <img width='100' src='https://dynamic.brandcrowd.com/asset/logo/c3cf1bd1-4261-4d85-a6c6-52dbce75799d/logo-search-grid-1x?v=637678103961270000' /> */}
-      <div style={{margin: '0px 5px', padding: '5px', border: '1px solid white'}}>Save</div>
-      <div style={{margin: '0px 5px', padding: '5px', border: '1px solid white'}}>Options</div>
-      <div style={{margin: '0px 5px', padding: '5px', border: '1px solid white'}}>Add Row</div>
-      <div style={{margin: '0px 5px', padding: '5px', border: '1px solid white'}}>Export MU chart</div>
-      <div style={{margin: '0px 5px', padding: '5px', border: '1px solid white', cursor: 'pointer',}} onClick={onClick}> {showRightPanel ? 'Hide' : 'Show'}</div>
-    </div>
-  )
-}
+	return (
+		<>
+			<div className='LeftHeader'>
+				<div className='LeftSection'>
+					{' '}
+					<img src={logo} className='HeaderLogo' />
+				</div>
+				<div className='RightSection'>
+					<span className='CharacterName'>Diddy Kong</span>
+					<img
+						src='https://media.discordapp.net/attachments/859799626994679838/973356414833655848/20220509_185025.jpg'
+						className='CharacterImg'
+					/>
+				</div>
+			</div>
+			<div className='LeftHeaderNav'>
+				<div onClick={goBack} className='EditorButton'>
+					{' '}
+					← Back{' '}
+				</div>
+				<div className='EditorButton'>Save</div>
+				<div className='EditorButton'>Options</div>
+				<div className='EditorButton'>Add Row</div>
+				<div className='EditorButton'>Export MU chart</div>
+				<div className='EditorButton' onClick={onClick}>
+					{' '}
+					{showRightPanel ? 'Hide' : 'Show'}
+				</div>
+			</div>
+		</>
+	);
+};
