@@ -1,0 +1,68 @@
+.LoginViewContainer {
+	color: #fff;
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+	height: 100vh;
+	width: 100vw;
+}
+
+.Logo {
+	width: 256px;
+	margin: 25px;
+	margin-top: 250px;
+	-webkit-user-drag: none;
+	user-select: none;
+	-moz-user-select: none;
+	-webkit-user-select: none;
+	-ms-user-select: none;
+}
+
+.LoginForm {
+	display: flex;
+	flex-direction: column;
+	padding: 50px;
+	background-color: #1f1f1f;
+	border-radius: 15px;
+	min-width: 300px;
+}
+
+.LoginForm input {
+	background-color: #333;
+	border: 0;
+	padding: 15px;
+	margin: 5px;
+	border-radius: 25px;
+	color: #fff;
+}
+
+.LoginForm input:focus {
+	outline: none;
+}
+
+.LoginForm input[type='submit'] {
+	background-color: #efefef;
+	font-weight: 700;
+	margin-top: 25px;
+	color: #333;
+	cursor: pointer;
+	transition: all ease 0.25s;
+}
+
+.LoginForm input[type='submit']:hover {
+	background-color: #333;
+	color: #efefef;
+}
+
+.LoginFormLinks {
+	margin-top: 10px;
+	display: flex;
+	flex-direction: column;
+	justify-content: center;
+	align-items: center;
+}
+
+.LoginFormLinks a {
+	color: #cecece;
+	margin-top: 2px;
+}
