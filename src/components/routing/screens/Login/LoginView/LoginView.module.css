@@ -28,12 +28,14 @@
 }
 
 .LoginForm input {
+	font-family: 'Poppins';
+	font-weight: 500;
 	background-color: #333;
+	color: #fff;
 	border: 0;
+	border-radius: 25px;
 	padding: 15px;
 	margin: 5px;
-	border-radius: 25px;
-	color: #fff;
 	transition: background-color 0.25s ease;
 }
 
